@@ -1,25 +1,9 @@
 pragma solidity ^0.4.24;
 
 // TODO:
-/* Permission: Admin, Veterinaire, Publique, currentMaster */
+/* Permission: Admin, Veterinaire, Publique, currentMaster
 
-// functionalities:
-/*
-- Func changeMaster (newMaster) - Accès restreint au currentMaster, Vet, et Admin
-
-- Ajout de newMaster dans MasterTableHistory
-currentMaster = newMaster
-
-- Func addMedicalAct(act) - Accès restreint au currentMaster, vet
-- Ajout de act dans medicalTable
-
-- Func addPrize(prize)
-    Validate = false
-
-- Func validatePrize - Accès restreint Vel
-
-- Func add_male_parent
-- Func add_female_parent */
+*/
 
 
 contract Animals {
@@ -30,8 +14,8 @@ contract Animals {
     string public race;
     string public species;
     string public color;
-    address public father;
-    address public mother;
+    address public dam;
+    address public sire;
     uint public chipId;
     address public currentMaster;
 
@@ -42,12 +26,36 @@ contract Animals {
     MedicalEvent[] public medicalHistory;
     Prize[] public prizesHistory;
 
+    modifier restrictedAccess(address _account){
+        require (
+            /* msg.sender in careTakersList or msg.sender == currentMaster*/
+            )
+            _;
+    }
+
+    function addMedicalAct(_act) restrictedAccess() {
+        medicalHistory.push(_act);
+    }
+
     address[] public mastersList;
 
-    /* TODO: research all types of medical events */
-    /* enum EventType {operation, vaccin, maladie} */
+    address[] public careTakersList;
 
-    struct MedicalEvent{
+    /* TODO: research all types of medical events */
+    /* enum EventType {operation, vaccine, maladie} */
+
+    /* Permissions setup: */
+    modifier isMaster {
+        require(msg.sender == currentMaster);
+        _;
+    }
+
+    modifier isCareTaker {
+        require();
+        _;
+    }
+
+    struct MedicalEvent {
         /* EventType eventType; */
         string name;
         string eventType;
@@ -56,21 +64,41 @@ contract Animals {
         address careTaker;
     }
 
-    struct Prize{
+    struct Prize {
         /* EventType eventType; */
         /* IPFS url */
         string eventName;
         string prizeName;
         string eventType;
         string date;
-        address ownerAtDate;
+        address masterAtDate;
         bool certified;
     }
 
+    function changeMaster (newMaster) restrictedAccess {
+        require(is_careTaker() or msg.sender == currentMaster());
+        currentMaster = newMaster;
+        mastersList.push(newMaster);
+    }
 
-    /* constructor () public {
-        sex = Sex.male;
-    } */
+    /* to be accurate, "sire" in this context is used as the male parent,
+    although not all animals are 4 legged
+    same goes for "dam"
+    but hey, we don't know the word for generic animal parent. if you do, PR */
+    function add_sire(addr) restrictedAccess {
+
+    }
+
+    /* dam is the female parent */
+    function add_sire(_dam) restrictedAccess {
+        require(is_careTaker() or currentMaster());
+        dam = _dam
+    }
+
+    function certifyPrize (uint index) {
+        require (msg.sender is_careTaker());
+        prizesHistory[index].certified = true;
+    }
 
 
 
