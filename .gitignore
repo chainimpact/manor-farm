@@ -43,3 +43,5 @@ contracts/.placeholder
 test/.placeholder
 build
 node_modules
+
+tmp/
