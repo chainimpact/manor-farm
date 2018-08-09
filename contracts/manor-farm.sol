@@ -1,10 +1,5 @@
 pragma solidity ^0.4.24;
 
-// TODO:
-/* Permission: Admin, Veterinaire, Publique, currentMaster
-
-*/
-
 
 contract Animals {
 
@@ -19,30 +14,34 @@ contract Animals {
     uint public chipId;
     address public currentMaster;
 
-    // TODO: check sex enum
-    /* enum Sex {male, female, hermaphrodite, none} */
-    /* Sex public sex; */
+    enum Sex {male, female, other, none}
+    Sex public sex;
 
     MedicalEvent[] public medicalHistory;
     Prize[] public prizesHistory;
 
-    modifier restrictedAccess(address _account){
+    modifier isCustodian(){
         require (
-            /* msg.sender in careTakersList or msg.sender == currentMaster*/
-            )
+            custodiansList[msg.sender] != 0
+            );
             _;
     }
 
-    function addMedicalAct(_act) restrictedAccess() {
-        medicalHistory.push(_act);
+    modifier hasRestrictedAccess(address _account){
+        require (
+            msg.sender == currentMaster
+            || custodiansList[msg.sender] != 0
+            );
+            _;
     }
 
     address[] public mastersList;
 
-    address[] public careTakersList;
+    address[] public custodiansList;
 
     /* TODO: research all types of medical events */
-    /* enum EventType {operation, vaccine, maladie} */
+    enum MedicalEventType {operation, vaccine, sickness, checkup}
+    MedicalEventType public medicalEventType;
 
     /* Permissions setup: */
     modifier isMaster {
@@ -50,18 +49,18 @@ contract Animals {
         _;
     }
 
-    modifier isCareTaker {
+    modifier isCustodian {
         require();
         _;
     }
 
     struct MedicalEvent {
-        /* EventType eventType; */
+        MedicalEventType medicalEventType;
         string name;
         string eventType;
         string date;
         bool ended;
-        address careTaker;
+        address custodian;
     }
 
     struct Prize {
@@ -75,31 +74,30 @@ contract Animals {
         bool certified;
     }
 
+    function addMedicalAct(_act) restrictedAccess() {
+        medicalHistory.push(_act);
+    }
+
     function changeMaster (newMaster) restrictedAccess {
-        require(is_careTaker() or msg.sender == currentMaster());
+        require(isCustodian() || msg.sender == currentMaster;
         currentMaster = newMaster;
         mastersList.push(newMaster);
     }
 
-    /* to be accurate, "sire" in this context is used as the male parent,
-    although not all animals are 4 legged
-    same goes for "dam"
-    but hey, we don't know the word for generic animal parent. if you do, PR */
-    function add_sire(addr) restrictedAccess {
-
+    function addSire(address _sire) restrictedAccess {
+        require(isCustodian() || msg.sender == currentMaster);
+        sire = _sire;
     }
 
     /* dam is the female parent */
-    function add_sire(_dam) restrictedAccess {
-        require(is_careTaker() or currentMaster());
-        dam = _dam
+    function addDam(address _dam) restrictedAccess {
+        require(isCustodian() || msg.sender == currentMaster);
+        dam = _dam;
     }
 
     function certifyPrize (uint index) {
-        require (msg.sender is_careTaker());
+        require (isCustodian(msg.sender));
         prizesHistory[index].certified = true;
     }
-
-
 
 }
