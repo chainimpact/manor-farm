@@ -4,8 +4,8 @@ pragma solidity ^0.4.24;
 contract Animals {
 
     string public name;
-    string public birthdate;
-    string public deathdate;
+    unint256 public birthdate;
+    unint256 public deathdate;
     string public race;
     string public species;
     string public color;
@@ -14,18 +14,50 @@ contract Animals {
     uint public chipId;
     address public currentMaster;
 
+    /*
+    TODO: modify birthdate and deathdate from strings to better data types.
+    function set(uint256 _birthdate) {
+        birthdate = _birthdate;
+    }
+    function set(uint256 _deathdate) {
+        deathdate = _deathdate;
+    } */
+
+    // exotic animals might have fringe cases, so other and none were added
     enum Sex {male, female, other, none}
     Sex public sex;
 
+    // array with list of all medical events done on this animal
+    // ie. a dog has a rabies vaccine injected and this is recorded here
     MedicalEvent[] public medicalHistory;
+    // all prizes including medals, diplomas, prize money, tropheys, purses,
     Prize[] public prizesHistory;
 
     address[] public mastersList;
     address[] public custodiansList;
 
-    /* TODO: research all types of medical events */
-    enum MedicalEventType {operation, vaccine, sickness, checkup, other}
+    /* TODO: research all types of medical events.
+    categories might be fuzzy in which case a variable string
+    might be better suited.*/
+    enum MedicalEventType {vaccine, surgery, pharmacology, sickness, checkup, hospitalization, other}
     MedicalEventType public medicalEventType;
+
+    /* TODO: research all types of medical events.
+    categories might be fuzzy in which case a variable string
+    might be better suited.*/
+    enum PrizeType {
+        goldMedal,
+        silverMedal,
+        bronzeMedal,
+        otherMedal,
+        diploma,
+        prizeMoney,
+        trophey,
+        purse,
+        award,
+        badge,
+    }
+    PrizeType public prizeType;
 
     /* Permissions setup: */
     modifier isMaster {
@@ -33,19 +65,20 @@ contract Animals {
         _;
     }
 
-    modifier isCustodian(){
+    modifier hasRestrictedAccess(){
         require (
-            custodiansList[msg.sender] != 0
+            msg.sender == currentMaster
+            || assert(custodiansList[msg.sender] == 0x0);
             );
             _;
     }
 
-    modifier hasRestrictedAccess(address _account){
-        require (
-            msg.sender == currentMaster
-            || custodiansList[msg.sender] != 0
-            );
-            _;
+    function isCustodian() returns (bool) {
+        for (uint i=0; i<custodiansList; i++) {
+            return
+        }
+
+        require (custodiansList[msg.sender].name != 0);
     }
 
     struct MedicalEvent {
@@ -61,17 +94,19 @@ contract Animals {
         /* IPFS url */
         string eventName;
         string prizeName;
+        // TODO: add prizeType enum and check if it works
+        // PrizeType prizeType;
         string prizeType;
         string date;
         address masterAtDate;
         bool certified;
     }
 
-    function addMedicalAct(_act) hasRestrictedAccess() {
+    function addMedicalAct(MedicalEvent _act) hasRestrictedAccess() {
         medicalHistory.push(_act);
     }
 
-    function changeMaster (newMaster) hasRestrictedAccess {
+    function changeMaster (address newMaster) hasRestrictedAccess() {
         require(isCustodian() || msg.sender == currentMaster);
         currentMaster = newMaster;
         mastersList.push(newMaster);
