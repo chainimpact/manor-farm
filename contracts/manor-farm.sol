@@ -33,16 +33,28 @@ contract Animals {
     // all prizes including medals, diplomas, prize money, tropheys, purses,
     Prize[] public prizesHistory;
 
+    // all the animal's previous owners as well as the
+    // current owner on the last index.
     address[] public mastersList;
+    // custodians are pre-approved veterinarians, medics, government
+    // appointees and other entities.
     address[] public custodiansList;
 
     /* TODO: research all types of medical events.
     categories might be fuzzy in which case a variable string
     might be better suited.*/
-    enum MedicalEventType {vaccine, surgery, pharmacology, sickness, checkup, hospitalization, other}
+    enum MedicalEventType {
+        vaccine,
+        surgery,
+        pharmacology,
+        sickness,
+        checkup,
+        hospitalization,
+        other
+    }
     MedicalEventType public medicalEventType;
 
-    /* TODO: research all types of medical events.
+    /* TODO: research all types of prize types.
     categories might be fuzzy in which case a variable string
     might be better suited.*/
     enum PrizeType {
@@ -56,29 +68,43 @@ contract Animals {
         purse,
         award,
         badge,
+        other
     }
     PrizeType public prizeType;
 
-    /* Permissions setup: */
-    modifier isMaster {
+    /*
+    Permissions setup:
+    isMaster: actions that only the owner of the animal should
+    be able to modify
+    isCustodian: usually for official actions such as vaccination or prize validation.
+    hasRestrictedAccess: generic isMaster or isCustodian restriction.
+    */
+    // Only current master should have access to some features.
+    // ie. only master can change dog's custodiansList
+    modifier isMaster() {
         require(msg.sender == currentMaster);
         _;
     }
 
-    modifier hasRestrictedAccess(){
-        require (
-            msg.sender == currentMaster
-            || assert(custodiansList[msg.sender] == 0x0);
-            );
-            _;
+    /*
+    Only custodians have access to some functions/attributes.
+    for example only veterinarians would be able to add medical
+    interventions to an animal's medicalHistory list.
+    Another example would be prize validation. In which only competition
+    organizers can have access.
+    */
+    function isCustodian(address addr) returns (bool) {
+        for (uint i=0; i<custodiansList; i++) {
+            if addr == i:
+                return true
+            return false
+        }
     }
 
-    function isCustodian() returns (bool) {
-        for (uint i=0; i<custodiansList; i++) {
-            return
-        }
-
-        require (custodiansList[msg.sender].name != 0);
+    // either master or custodian have access
+    modifier hasRestrictedAccess(){
+        require (isMaster || isCustodian(msg.sender));
+        _;
     }
 
     struct MedicalEvent {
@@ -107,19 +133,24 @@ contract Animals {
     }
 
     function changeMaster (address newMaster) hasRestrictedAccess() {
-        require(isCustodian() || msg.sender == currentMaster);
+        require(isCustodian(msg.sender) || msg.sender == currentMaster);
         currentMaster = newMaster;
         mastersList.push(newMaster);
     }
 
+    function addcustodian(address addr) {
+        require (isCurrentMaster()) || require (isCustodian(msg.sender));
+        custodiansList.push(addr);
+    }
+
     function addSire(address _sire) hasRestrictedAccess {
-        require(isCustodian() || msg.sender == currentMaster);
+        require(isCustodian(msg.sender) || msg.sender == currentMaster);
         sire = _sire;
     }
 
     /* dam is the female parent */
     function addDam(address _dam) hasRestrictedAccess {
-        require(isCustodian() || msg.sender == currentMaster);
+        require(isCustodian(msg.sender) || msg.sender == currentMaster);
         dam = _dam;
     }
 
