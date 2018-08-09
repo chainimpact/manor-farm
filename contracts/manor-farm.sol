@@ -4,8 +4,8 @@ pragma solidity ^0.4.24;
 contract Animals {
 
     string public name;
-    unint256 public birthdate;
-    unint256 public deathdate;
+    uint256 public birthdate;
+    uint256 public deathdate;
     string public race;
     string public species;
     string public color;
@@ -13,6 +13,30 @@ contract Animals {
     address public sire;
     uint public chipId;
     address public currentMaster;
+
+    constructor (
+        string _name,
+        uint256 _birthdate,
+        uint256 _deathdate,
+        string _race,
+        string _species,
+        string _color,
+        address _dam,
+        address _sire,
+        uint _chipId,
+        address _currentMaster
+        ) public {
+        name = _name;
+        birthdate = _birthdate;
+        deathdate = _deathdate;
+        race = _race;
+        species = _species;
+        color = _color;
+        dam = _dam;
+        sire = _sire;
+        chipId = _chipId;
+        currentMaster = _currentMaster;
+    }
 
     /*
     TODO: modify birthdate and deathdate from strings to better data types.
@@ -39,6 +63,9 @@ contract Animals {
     // custodians are pre-approved veterinarians, medics, government
     // appointees and other entities.
     address[] public custodiansList;
+    // certified custodians at national or international level
+    // TODO: research this subject
+    address[] public certifiedCustodiansList;
 
     /* TODO: research all types of medical events.
     categories might be fuzzy in which case a variable string
@@ -81,9 +108,9 @@ contract Animals {
     */
     // Only current master should have access to some features.
     // ie. only master can change dog's custodiansList
-    modifier isMaster() {
-        require(msg.sender == currentMaster);
-        _;
+    function isMaster(address _addr) public view returns (bool) {
+        require(_addr == currentMaster);
+        return true;
     }
 
     /*
@@ -93,17 +120,18 @@ contract Animals {
     Another example would be prize validation. In which only competition
     organizers can have access.
     */
-    function isCustodian(address addr) returns (bool) {
-        for (uint i=0; i<custodiansList; i++) {
-            if addr == i:
-                return true
-            return false
+    function isCustodian(address _addr) public view returns (bool) {
+        for (uint i=0; i < custodiansList.length; i++) {
+            if (_addr == custodiansList[i]) {
+                return true;
+            }
+            return false;
         }
     }
 
     // either master or custodian have access
     modifier hasRestrictedAccess(){
-        require (isMaster || isCustodian(msg.sender));
+        require (isMaster(msg.sender) || isCustodian(msg.sender));
         _;
     }
 
@@ -128,35 +156,41 @@ contract Animals {
         bool certified;
     }
 
-    function addMedicalAct(MedicalEvent _act) hasRestrictedAccess() {
-        medicalHistory.push(_act);
-    }
+    // commented for now because of the following error:
 
-    function changeMaster (address newMaster) hasRestrictedAccess() {
+    /* TypeError: This type is only supported in the new experimental ABI
+    encoder. Use "pragma experimental ABIEncoderV2;" to enable the feature. */
+    /* function addMedicalAct(MedicalEvent _act) hasRestrictedAccess() {
+        medicalHistory.push(_act);
+    } */
+
+    // Change master can only be done by currentMaster or custodian
+    function changeMaster (address newMaster) internal hasRestrictedAccess() {
         require(isCustodian(msg.sender) || msg.sender == currentMaster);
         currentMaster = newMaster;
         mastersList.push(newMaster);
     }
 
-    function addcustodian(address addr) {
-        require (isCurrentMaster()) || require (isCustodian(msg.sender));
+    function addcustodian(address addr) internal hasRestrictedAccess() {
         custodiansList.push(addr);
     }
 
-    function addSire(address _sire) hasRestrictedAccess {
-        require(isCustodian(msg.sender) || msg.sender == currentMaster);
+    // dam is the male parent
+    function addSire(address _sire) internal hasRestrictedAccess {
         sire = _sire;
     }
 
-    /* dam is the female parent */
-    function addDam(address _dam) hasRestrictedAccess {
-        require(isCustodian(msg.sender) || msg.sender == currentMaster);
+    // dam is the female parent
+    function addDam(address _dam) internal hasRestrictedAccess {
         dam = _dam;
     }
 
-    function certifyPrize (uint index) {
+    /*
+    This function will certify a prize already added to the prizelist
+    This can only be done by a certifiedCustodian
+    */
+    function certifyPrize (uint index) internal {
         require (isCustodian(msg.sender));
         prizesHistory[index].certified = true;
     }
-
 }
