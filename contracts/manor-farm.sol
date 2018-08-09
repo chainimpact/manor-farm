@@ -20,6 +20,19 @@ contract Animals {
     MedicalEvent[] public medicalHistory;
     Prize[] public prizesHistory;
 
+    address[] public mastersList;
+    address[] public custodiansList;
+
+    /* TODO: research all types of medical events */
+    enum MedicalEventType {operation, vaccine, sickness, checkup, other}
+    MedicalEventType public medicalEventType;
+
+    /* Permissions setup: */
+    modifier isMaster {
+        require(msg.sender == currentMaster);
+        _;
+    }
+
     modifier isCustodian(){
         require (
             custodiansList[msg.sender] != 0
@@ -35,62 +48,42 @@ contract Animals {
             _;
     }
 
-    address[] public mastersList;
-
-    address[] public custodiansList;
-
-    /* TODO: research all types of medical events */
-    enum MedicalEventType {operation, vaccine, sickness, checkup}
-    MedicalEventType public medicalEventType;
-
-    /* Permissions setup: */
-    modifier isMaster {
-        require(msg.sender == currentMaster);
-        _;
-    }
-
-    modifier isCustodian {
-        require();
-        _;
-    }
-
     struct MedicalEvent {
-        MedicalEventType medicalEventType;
         string name;
-        string eventType;
         string date;
         bool ended;
         address custodian;
+        MedicalEventType medicalEventType;
+        /* string eventType; */
     }
 
     struct Prize {
-        /* EventType eventType; */
         /* IPFS url */
         string eventName;
         string prizeName;
-        string eventType;
+        string prizeType;
         string date;
         address masterAtDate;
         bool certified;
     }
 
-    function addMedicalAct(_act) restrictedAccess() {
+    function addMedicalAct(_act) hasRestrictedAccess() {
         medicalHistory.push(_act);
     }
 
-    function changeMaster (newMaster) restrictedAccess {
-        require(isCustodian() || msg.sender == currentMaster;
+    function changeMaster (newMaster) hasRestrictedAccess {
+        require(isCustodian() || msg.sender == currentMaster);
         currentMaster = newMaster;
         mastersList.push(newMaster);
     }
 
-    function addSire(address _sire) restrictedAccess {
+    function addSire(address _sire) hasRestrictedAccess {
         require(isCustodian() || msg.sender == currentMaster);
         sire = _sire;
     }
 
     /* dam is the female parent */
-    function addDam(address _dam) restrictedAccess {
+    function addDam(address _dam) hasRestrictedAccess {
         require(isCustodian() || msg.sender == currentMaster);
         dam = _dam;
     }
