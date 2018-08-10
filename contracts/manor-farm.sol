@@ -1,42 +1,57 @@
 pragma solidity ^0.4.24;
 
+/*
+Tracking history of an animals life and general data.
+This can be used for domestic uses such as dog or cats and their vaccines and generic documents as
+well as for more specialized animals such as race horses, livestock and/or exotic animals.
 
+As a first version, we will focus on domestic animals and add more functionality for livestock
+at a later date.
+*/
 contract Animals {
 
     string public name;
-    uint256 public birthdate;
-    uint256 public deathdate;
-    string public race;
+    bytes12 public birthdate;
+    bytes12 public deathdate;
     string public species;
+    string public breed;
     string public color;
     address public dam;
     address public sire;
-    uint public chipId;
+    string public chipId;
+    string public tattooId;
     address public currentMaster;
 
     constructor (
+        address _currentMaster,
         string _name,
-        uint256 _birthdate,
-        uint256 _deathdate,
-        string _race,
+        bytes12 _birthdate,
         string _species,
+        string _breed,
         string _color,
         address _dam,
         address _sire,
-        uint _chipId,
-        address _currentMaster
+        string _chipId,
+        string _tattooId
         ) public {
+        currentMaster = _currentMaster;
         name = _name;
         birthdate = _birthdate;
-        deathdate = _deathdate;
-        race = _race;
         species = _species;
+        breed = _breed;
         color = _color;
         dam = _dam;
         sire = _sire;
         chipId = _chipId;
-        currentMaster = _currentMaster;
+        tattooId = _tattooId;
     }
+
+    /*
+    TODO:
+    add all feeds and pharmaceuticals used in raising the animal
+    add location of moements between the animals's origin and place of slaughter (if applicable)
+    add movement of specific animal products from the processing plant to the retail consumer (if applicable)
+    */
 
     /*
     TODO: modify birthdate and deathdate from strings to better data types.
@@ -51,12 +66,6 @@ contract Animals {
     enum Sex {male, female, other, none}
     Sex public sex;
 
-    // array with list of all medical events done on this animal
-    // ie. a dog has a rabies vaccine injected and this is recorded here
-    MedicalEvent[] public medicalHistory;
-    // all prizes including medals, diplomas, prize money, tropheys, purses,
-    Prize[] public prizesHistory;
-
     // all the animal's previous owners as well as the
     // current owner on the last index.
     address[] public mastersList;
@@ -66,6 +75,10 @@ contract Animals {
     // certified custodians at national or international level
     // TODO: research this subject
     address[] public certifiedCustodiansList;
+
+    // array with list of all medical events done on this animal
+    // ie. a dog has a rabies vaccine injected and this is recorded here
+    MedicalEvent[] public medicalHistory;
 
     /* TODO: research all types of medical events.
     categories might be fuzzy in which case a variable string
@@ -80,6 +93,28 @@ contract Animals {
         other
     }
     MedicalEventType public medicalEventType;
+
+    struct MedicalEvent {
+        string name;
+        string date;
+        bool ended;
+        address custodian;
+        MedicalEventType medicalEventType;
+        /* string eventType; */
+    }
+
+    function addMedicalAct(string _name, string _date, bool _ended, address _custodian, MedicalEventType _medicalEventType) hasRestrictedAccess() {
+        medicalHistory.push({
+            name : _name,
+            date : _date,
+            ended : _ended,
+            custodian : _custodian,
+            medicalEventType : _medicalEventType
+        });
+    }
+
+    // all prizes including medals, diplomas, prize money, tropheys, purses,
+    Prize[] public prizesHistory;
 
     /* TODO: research all types of prize types.
     categories might be fuzzy in which case a variable string
@@ -98,6 +133,18 @@ contract Animals {
         other
     }
     PrizeType public prizeType;
+
+    struct Prize {
+        /* IPFS url */
+        string eventName;
+        string prizeName;
+        // TODO: add prizeType enum and check if it works
+        // PrizeType prizeType;
+        string prizeType;
+        string date;
+        address masterAtDate;
+        bool certified;
+    }
 
     /*
     Permissions setup:
@@ -135,35 +182,6 @@ contract Animals {
         _;
     }
 
-    struct MedicalEvent {
-        string name;
-        string date;
-        bool ended;
-        address custodian;
-        MedicalEventType medicalEventType;
-        /* string eventType; */
-    }
-
-    struct Prize {
-        /* IPFS url */
-        string eventName;
-        string prizeName;
-        // TODO: add prizeType enum and check if it works
-        // PrizeType prizeType;
-        string prizeType;
-        string date;
-        address masterAtDate;
-        bool certified;
-    }
-
-    // commented for now because of the following error:
-
-    /* TypeError: This type is only supported in the new experimental ABI
-    encoder. Use "pragma experimental ABIEncoderV2;" to enable the feature. */
-    /* function addMedicalAct(MedicalEvent _act) hasRestrictedAccess() {
-        medicalHistory.push(_act);
-    } */
-
     // Change master can only be done by currentMaster or custodian
     function changeMaster (address newMaster) internal hasRestrictedAccess() {
         require(isCustodian(msg.sender) || msg.sender == currentMaster);
@@ -192,5 +210,23 @@ contract Animals {
     function certifyPrize (uint index) internal {
         require (isCustodian(msg.sender));
         prizesHistory[index].certified = true;
+    }
+
+    // commented for now because of the following error:
+
+    /* TypeError: This type is only supported in the new experimental ABI
+    encoder. Use "pragma experimental ABIEncoderV2;" to enable the feature. */
+    /*
+    function getPrizes() public returns (Prize[]) {
+        return prizesHistory;
+    }
+    */
+
+    function getCustodians() public view returns (address[]) {
+        return custodiansList;
+    }
+
+    function getCertifiedCustodians() public view returns (address[]) {
+        return certifiedCustodiansList;
     }
 }
