@@ -10,7 +10,10 @@ at a later date.
 */
 contract Animals {
 
-    string public name;
+    bytes32 public name;
+    address public currentMaster;
+    // small problem in remix when trying to input these values
+    // must input hex values
     bytes12 public birthdate;
     bytes12 public deathdate;
     string public species;
@@ -20,11 +23,13 @@ contract Animals {
     address public sire;
     string public chipId;
     string public tattooId;
-    address public currentMaster;
 
+    // helper string for constructor
+    // "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "spotty", "201010011200", "dog", "terrier", "black", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "ab123", "ab123"
+    // "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "spotty", "0x323031303130303131323030", "dog", "terrier", "black", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "ab123", "ab123"
     constructor (
+        bytes32 _name,
         address _currentMaster,
-        string _name,
         bytes12 _birthdate,
         string _species,
         string _breed,
@@ -34,8 +39,8 @@ contract Animals {
         string _chipId,
         string _tattooId
         ) public {
-        currentMaster = _currentMaster;
         name = _name;
+        currentMaster = _currentMaster;
         birthdate = _birthdate;
         species = _species;
         breed = _breed;
@@ -103,14 +108,20 @@ contract Animals {
         /* string eventType; */
     }
 
-    function addMedicalAct(string _name, string _date, bool _ended, address _custodian, MedicalEventType _medicalEventType) hasRestrictedAccess() {
-        medicalHistory.push({
-            name : _name,
-            date : _date,
-            ended : _ended,
-            custodian : _custodian,
-            medicalEventType : _medicalEventType
-        });
+    function addMedicalAct(
+        string _name,
+        string _date,
+        bool _ended,
+        address _custodian,
+        MedicalEventType _medicalEventType
+    ) hasRestrictedAccess() public {
+            medicalHistory.push(MedicalEvent({
+                name : _name,
+                date : _date,
+                ended : _ended,
+                custodian : _custodian,
+                medicalEventType : _medicalEventType
+            }));
     }
 
     // all prizes including medals, diplomas, prize money, tropheys, purses,
