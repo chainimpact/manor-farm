@@ -10,7 +10,7 @@ at a later date.
 */
 contract Animals {
 
-    bytes32 public name;
+    string public name;
     address public currentMaster;
     // small problem in remix when trying to input these values
     // must input hex values
@@ -26,11 +26,12 @@ contract Animals {
 
     // helper string for constructor
     // "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "spotty", "201010011200", "dog", "terrier", "black", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "ab123", "ab123"
-    // "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "spotty", "0x323031303130303131323030", "dog", "terrier", "black", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "0xca35b7d915458ef540ade6068dfe2f44e8fa733c", "ab123", "ab123"
+    // "spotty","0xca35b7d915458ef540ade6068dfe2f44e8fa733c","0x323031303130303131323030","0","dog","terrier","black","0xca35b7d915458ef540ade6068dfe2f44e8fa733c","0xca35b7d915458ef540ade6068dfe2f44e8fa733c","ab123","ab123"
     constructor (
-        bytes32 _name,
+        string _name,
         address _currentMaster,
         bytes12 _birthdate,
+        Sex _sex,
         string _species,
         string _breed,
         string _color,
@@ -42,6 +43,7 @@ contract Animals {
         name = _name;
         currentMaster = _currentMaster;
         birthdate = _birthdate;
+        sex = _sex;
         species = _species;
         breed = _breed;
         color = _color;
@@ -49,6 +51,8 @@ contract Animals {
         sire = _sire;
         chipId = _chipId;
         tattooId = _tattooId;
+
+        mastersList.push(_currentMaster);
     }
 
     /*
@@ -79,6 +83,7 @@ contract Animals {
     address[] public custodiansList;
     // certified custodians at national or international level
     // TODO: research this subject
+    // TODO: fix `call to Animals.certifiedCustodiansList errored: VM error: invalid opcode`
     address[] public certifiedCustodiansList;
 
     // array with list of all medical events done on this animal
@@ -167,7 +172,7 @@ contract Animals {
     // Only current master should have access to some features.
     // ie. only master can change dog's custodiansList
     function isMaster(address _addr) public view returns (bool) {
-        require(_addr == currentMaster);
+        require(_addr == currentMaster, "Must be animal`s current Master to do this action.");
         return true;
     }
 
@@ -187,30 +192,50 @@ contract Animals {
         }
     }
 
+    /*
+    Only custodians have access to some functions/attributes.
+    for example only veterinarians would be able to add medical
+    interventions to an animal's medicalHistory list.
+    Another example would be prize validation. In which only competition
+    organizers can have access.
+    */
+    function isCertifiedCustodian(address _addr) public view returns (bool) {
+        for (uint i=0; i < certifiedCustodiansList.length; i++) {
+            if (_addr == certifiedCustodiansList[i]) {
+                return true;
+            }
+            return false;
+        }
+    }
+
     // either master or custodian have access
     modifier hasRestrictedAccess(){
-        require (isMaster(msg.sender) || isCustodian(msg.sender));
+        require (
+            isMaster(msg.sender) ||
+            isCustodian(msg.sender) ||
+            isCertifiedCustodian(msg.sender),
+            "This action has restricted access. Must be either current master, custodian or certifiedcustodian."
+        );
         _;
     }
 
     // Change master can only be done by currentMaster or custodian
-    function changeMaster (address newMaster) internal hasRestrictedAccess() {
-        require(isCustodian(msg.sender) || msg.sender == currentMaster);
+    function changeMaster (address newMaster) public hasRestrictedAccess() {
         currentMaster = newMaster;
         mastersList.push(newMaster);
     }
 
-    function addcustodian(address addr) internal hasRestrictedAccess() {
+    function addcustodian(address addr) public hasRestrictedAccess() {
         custodiansList.push(addr);
     }
 
     // dam is the male parent
-    function addSire(address _sire) internal hasRestrictedAccess {
+    function addSire(address _sire) public hasRestrictedAccess {
         sire = _sire;
     }
 
     // dam is the female parent
-    function addDam(address _dam) internal hasRestrictedAccess {
+    function addDam(address _dam) public hasRestrictedAccess {
         dam = _dam;
     }
 
@@ -218,8 +243,8 @@ contract Animals {
     This function will certify a prize already added to the prizelist
     This can only be done by a certifiedCustodian
     */
-    function certifyPrize (uint index) internal {
-        require (isCustodian(msg.sender));
+    function certifyPrize (uint index) public {
+        require (isCustodian(msg.sender), "Prize certification can only be done by official Certified Custodians");
         prizesHistory[index].certified = true;
     }
 
