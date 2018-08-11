@@ -10,9 +10,8 @@ well as for more specialized animals such as race horses, livestock and/or exoti
 
 As a first version, we will focus on domestic animals and add more functionality for livestock
 at a later date.
-*/
 
-/*
+
 TODO:
 add all feeds and pharmaceuticals used in raising the animal
 add location of moements between the animals's origin and place of slaughter (if applicable)
