@@ -1,5 +1,9 @@
 pragma solidity ^0.4.24;
-/*
+
+/**
+@title manor farm: domestic animal's traceability
+@author chainimpact.io
+
 Tracking history of an animals life and general data.
 This can be used for domestic uses such as dog or cats and their vaccines and generic documents as
 well as for more specialized animals such as race horses, livestock and/or exotic animals.
@@ -15,6 +19,7 @@ add location of moements between the animals's origin and place of slaughter (if
 add movement of specific animal products from the processing plant to the retail consumer (if applicable)
 
 TODO: modify birthdate and deathdate from strings to better data types.
+ie:
 function set(uint256 _birthdate) {
     birthdate = _birthdate;
 }
@@ -22,7 +27,7 @@ function set(uint256 _deathdate) {
     deathdate = _deathdate;
 } */
 
-contract Animals {
+contract Animal {
 
     string public name;
     address public currentMaster;
@@ -33,8 +38,8 @@ contract Animals {
     string public species;
     string public breed;
     string public color;
-    address public dam;
-    address public sire;
+    address public femaleParent;
+    address public maleParent;
     string public chipId;
     string public tattooId;
 
@@ -124,8 +129,8 @@ contract Animals {
         string _species,
         string _breed,
         string _color,
-        address _dam,
-        address _sire,
+        address _femaleParent,
+        address _maleParent,
         string _chipId,
         string _tattooId
         ) public {
@@ -136,8 +141,8 @@ contract Animals {
         species = _species;
         breed = _breed;
         color = _color;
-        dam = _dam;
-        sire = _sire;
+        femaleParent = _femaleParent;
+        maleParent = _maleParent;
         chipId = _chipId;
         tattooId = _tattooId;
 
@@ -217,26 +222,24 @@ contract Animals {
         custodiansList.push(addr);
     }
 
-    // dam is the male parent
-    function addSire(address _sire) public hasRestrictedAccess {
-        sire = _sire;
+    function addMaleParent(address _maleParent) public hasRestrictedAccess {
+        maleParent = _maleParent;
     }
 
-    // dam is the female parent
-    function addDam(address _dam) public hasRestrictedAccess {
-        dam = _dam;
+    function addfemaleParent(address _femaleParent) public hasRestrictedAccess {
+        femaleParent = _femaleParent;
     }
 
     function addPrize (
-        string _name,
+        string _eventName,
         string _prizeName,
         string _prizeType,
         string _date,
-        address masterAtDate,
-        bool certified
-    ) public {
+        address _masterAtDate,
+        bool _certified
+    ) public hasRestrictedAccess() {
         prizesHistory.push(Prize({
-            name: _name,
+            eventName: _eventName,
             prizeName: _prizeName,
             prizeType: _prizeType,
             date: _date,
