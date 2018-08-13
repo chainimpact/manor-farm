@@ -164,6 +164,12 @@ contract Animal {
             }));
     }
 
+    // function endMedicalAct(
+    //     MedicalEvent medicalEvent
+    // ) hasRestrictedAccess() public {
+    //     medicalHistory[medicalEvent].ended = true;
+    // }
+
     /*
     Permissions setup:
     isMaster: actions that only the owner of the animal should
@@ -197,8 +203,14 @@ contract Animal {
     /*
     TODO: get cerrtifiedcustodians from external regitry list or TCR
     */
-    // function isCertifiedCustodian(address _addr) public view returns (bool) {
-    // }
+    function isCertifiedCustodian(address _addr) public view returns (bool) {
+        for (uint i=0; i < certifiedCustodiansList.length; i++) {
+            if (_addr == certifiedCustodiansList[i]) {
+                return true;
+            }
+            return false;
+        }
+    }
 
     // either master or custodian have access
     modifier hasRestrictedAccess(){
@@ -222,10 +234,19 @@ contract Animal {
     }
 
     function addMaleParent(address _maleParent) public hasRestrictedAccess {
+        require(maleParent == 0x0000000000000000000000000000000000000000);
         maleParent = _maleParent;
     }
 
     function addfemaleParent(address _femaleParent) public hasRestrictedAccess {
+        require(femaleParent == 0x0000000000000000000000000000000000000000);
+        femaleParent = _femaleParent;
+    }
+
+    function addParents(address _maleParent, address _femaleParent) public hasRestrictedAccess {
+        require(maleParent == 0x0000000000000000000000000000000000000000);
+        require(femaleParent == 0x0000000000000000000000000000000000000000);
+        maleParent = _femaleParent;
         femaleParent = _femaleParent;
     }
 
@@ -265,6 +286,10 @@ contract Animal {
         return prizesHistory;
     }
     */
+
+    // function getmedicalHistory() public view returns (address[]) {
+    //     return medicalHistory;
+    // }
 
     function getCustodians() public view returns (address[]) {
         return custodiansList;
